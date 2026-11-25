@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indian Equity Intelligence Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for reliable charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      font-family: 'Calibri', 'Segoe UI', Arial, sans-serif !important;
+    }
+    .header-navy {
+      background-color: #0B3D91 !important;
+      color: #ffffff !important;
+    }
+    .input-blue {
+      color: #0000FF !important;
+      font-weight: 600;
+    }
+    .badge-buy {
+      background-color: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+    .badge-hold {
+      background-color: #DBEAFE;
+      color: #1E40AF;
+      border: 1px solid #BFDBFE;
+    }
+    .badge-avoid {
+      background-color: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FECACA;
+    }
+    /* Sticky bottom nav */
+    .bottom-nav-btn.active {
+      background-color: #0B3D91;
+      color: #ffffff;
+    }
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #0B3D91;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen pb-20 text-gray-800">
+
+  <!-- APP CONTAINER -->
+  <div id="app">
+    <!-- HEADER -->
+    <header class="header-navy p-4 text-center shadow-md">
+      <h1 className="text-xl font-bold tracking-wide">Indian Equity Intelligence Dashboard</h1>
+      <p class="text-xs opacity-90 mt-1">
+        Snapshot: <span id="snapshot-date"></span> | Scored Stocks: <span id="scored-count">0</span>
+      </p>
+      <p class="text-xs text-blue-200 mt-0.5">Regime: BULLISH (65% stocks above 50-DMA)</p>
+    </header>
+
+    <!-- MAIN VIEW AREA -->
+    <main id="main-content" class="max-w-4xl mx-auto p-3">
+      <!-- Content injected by JavaScript -->
+    </main>
+
+    <!-- FIXED BOTTOM NAVIGATION (MOBILE APPLIKE) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-50 shadow-lg">
+      <div class="max-w-4xl mx-auto grid grid-cols-5 p-1 gap-1">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all active">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 00-1 1m-6 0h6"></path></svg>
+          <span class="text-xs font-semibold block">Dashboard</span>
+        </button>
+        <button onclick="switchTab('stocks')" id="nav-stocks" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all text-gray-600 hover:bg-gray-100">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+          <span class="text-xs font-semibold block">Stocks</span>
+        </button>
+        <button onclick="switchTab('buy')" id="nav-buy" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all text-gray-600 hover:bg-gray-100">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span class="text-xs font-semibold block">Buy Lists</span>
+        </button>
+        <button onclick="switchTab('portfolio')" id="nav-portfolio" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all text-gray-600 hover:bg-gray-100">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span class="text-xs font-semibold block">Portfolio</span>
+        </button>
+        <button onclick="switchTab('sectors')" id="nav-sectors" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all text-gray-600 hover:bg-gray-100">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12H4z"></path></svg>
+          <span class="text-xs font-semibold block">Sectors</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    // ==========================================
+    // 1. DATA INITIALIZATION & SCORING ENGINE
+    // ==========================================
+    const WEIGHTS = {
+      fundamentals: 20,
+      technical: 20,
+      priceAction: 15,
+      sectorStrength: 15,
+      news: 10,
+      valuation: 10,
+      market: 10
+    };
+
+    const SECTORS = ['Financial Services', 'IT', 'Pharma', 'FMCG', 'Oil & Gas', 'Metals', 'Automobiles', 'Infrastructure', 'Telecom', 'Power'];
+
+    // Generate Initial Stock Database
+    const initialStocksData = [
+      { symbol: 'RELIANCE', company: 'Reliance Industries Ltd', sector: 'Oil & Gas', price: 2850, roe: 14.5, debtEquity: 0.4, revCAGR: 12.5, fScore: 8, carRating: 'Buy/Average Out' },
+      { symbol: 'TCS', company: 'Tata Consultancy Services', sector: 'IT', price: 3580, roe: 45.2, debtEquity: 0.05, revCAGR: 11.2, fScore: 9, carRating: 'Buy/Average Out' },
+      { symbol: 'HDFCBANK', company: 'HDFC Bank Ltd', sector: 'Financial Services', price: 1720, roe: 16.8, debtEquity: 0.8, revCAGR: 18.5, fScore: 8, carRating: 'New 52W High' },
+      { symbol: 'INFY', company: 'Infosys Ltd', sector: 'IT', price: 1520, roe: 31.4, debtEquity: 0.08, revCAGR: 10.8, fScore: 7, carRating: 'Buy/Average Out' },
+      { symbol: 'HINDUNILVR', company: 'Hindustan Unilever Ltd', sector: 'FMCG', price: 2780, roe: 29.1, debtEquity: 0.02, revCAGR: 8.4, fScore: 8, carRating: 'Avoid/Hold' },
+      { symbol: 'ICICIBANK', company: 'ICICI Bank Ltd', sector: 'Financial Services', price: 1020, roe: 18.2, debtEquity: 0.7, revCAGR: 19.1, fScore: 9, carRating: 'Buy/Average Out' },
+      { symbol: 'SBIN', company: 'State Bank of India', sector: 'Financial Services', price: 620, roe: 17.5, debtEquity: 1.2, revCAGR: 14.2, fScore: 7, carRating: 'Buy/Average Out' },
+      { symbol: 'BHARTIARTL', company: 'Bharti Airtel Ltd', sector: 'Telecom', price: 1150, roe: 12.4, debtEquity: 1.1, revCAGR: 15.6, fScore: 8, carRating: 'New 52W High' },
+      { symbol: 'ITC', company: 'ITC Ltd', sector: 'FMCG', price: 450, roe: 28.5, debtEquity: 0.01, revCAGR: 9.8, fScore: 8, carRating: 'Buy/Average Out' },
+      { symbol: 'LT', company: 'Larsen & Toubro Ltd', sector: 'Infrastructure', price: 3580, roe: 15.6, debtEquity: 0.9, revCAGR: 13.4, fScore: 8, carRating: 'Buy/Average Out' },
+      { symbol: 'TATAMOTORS', company: 'Tata Motors Ltd', sector: 'Automobiles', price: 980, roe: 21.3, debtEquity: 0.85, revCAGR: 16.8, fScore: 8, carRating: 'New 52W High' },
+      { symbol: 'SUNPHARMA', company: 'Sun Pharmaceutical Ltd', sector: 'Pharma', price: 1620, roe: 16.4, debtEquity: 0.12, revCAGR: 11.5, fScore: 7, carRating: 'Buy/Average Out' },
+      { symbol: 'TATASTEEL', company: 'Tata Steel Ltd', sector: 'Metals', price: 145, roe: 9.2, debtEquity: 0.65, revCAGR: 6.5, fScore: 5, carRating: 'Avoid/Hold' },
+      { symbol: 'NTPC', company: 'NTPC Ltd', sector: 'Power', price: 360, roe: 13.1, debtEquity: 1.3, revCAGR: 10.1, fScore: 7, carRating: 'Buy/Average Out' },
+      { symbol: 'MARUTI', company: 'Maruti Suzuki India', sector: 'Automobiles', price: 12400, roe: 14.8, debtEquity: 0.02, revCAGR: 12.1, fScore: 8, carRating: 'Avoid/Hold' }
+    ];
+
+    // Generate 15 more stocks dynamically to have 30 stocks
+    for (let i = 1; i <= 15; i++) {
+      const sector = SECTORS[i % SECTORS.length];
+      const symbol = `STK_${sector.substring(0,3).toUpperCase()}_${i}`;
+      initialStocksData.push({
+        symbol,
+        company: `${sector} Growth Stock ${i}`,
+        sector,
+        price: Math.round(Math.random() * 1500 + 100),
+        roe: Math.round(Math.random() * 25 + 5),
+        debtEquity: Number((Math.random() * 2).toFixed(2)),
+        revCAGR: Math.round(Math.random() * 20 + 2),
+        fScore: Math.floor(Math.random() * 6 + 4),
+        carRating: ['Buy/Average Out', 'New 52W High', 'Avoid/Hold'][i % 3]
+      });
+    }
+
+    let stocks = [];
+
+    // Calculate Scores (Excel Formula Replica)
+    function calculateStockScores(stock) {
+      const price = stock.price;
+      const dma20 = stock.dma20 || price * (0.97 + (Math.random() * 0.05));
+      const dma50 = stock.dma50 || price * (0.94 + (Math.random() * 0.08));
+      const dma200 = stock.dma200 || price * (0.88 + (Math.random() * 0.12));
+      const high52 = stock.high52 || price * (1.05 + (Math.random() * 0.15));
+      const avgVol20 = 500000;
+      const lastVol = Math.round(avgVol20 * (0.8 + Math.random() * 1.2));
+
+      // 1. Fundamentals
+      let fundScore = 0;
+      if (stock.roe && stock.debtEquity !== undefined) {
+        const roePts = Math.min(10, stock.roe / 2.5);
+        const dePts = Math.max(0, 10 - stock.debtEquity * 4);
+        const cagrPts = Math.min(10, stock.revCAGR / 2);
+        fundScore = (roePts + dePts + cagrPts) / 3;
+      } else {
+        fundScore = stock.fScore || 6;
+      }
+
+      // 2. Technical
+      let techPts = 0;
+      if (price > dma50) techPts += 3;
+      if (price > dma200) techPts += 4;
+      if (price > dma20) techPts += 3;
+
+      // 3. Price Action
+      let paPts = 0;
+      const volRatio = lastVol / avgVol20;
+      if (volRatio >= 1.2) paPts += 5;
+      if (volRatio >= 0.9) paPts += 3;
+      if (price / high52 >= 0.95) paPts += 2;
+
+      // 4. Valuation / Risk Reward
+      const target = Math.round(price * 1.2);
+      const stop = Math.round(price * 0.94);
+      const rrRatio = (target - stop) / (price - stop);
+      let valPts = rrRatio >= 2 ? 8 : (rrRatio >= 1.5 ? 6 : 4);
+
+      // Composite Score (0 - 10)
+      const overallScore = (
+        (fundScore * WEIGHTS.fundamentals) +
+        (techPts * WEIGHTS.technical) +
+        (paPts * WEIGHTS.priceAction) +
+        (6 * WEIGHTS.sectorStrength) +
+        (7 * WEIGHTS.news) +
+        (valPts * WEIGHTS.valuation) +
+        (7 * WEIGHTS.market)
+      ) / 100;
+
+      const finalScore = Number(Math.min(10, Math.max(0, overallScore)).toFixed(1));
+      const signal = finalScore >= 7.2 ? 'BUY' : (finalScore >= 5.5 ? 'HOLD' : 'AVOID');
+
+      return {
+        ...stock,
+        dma20: Math.round(dma20),
+        dma50: Math.round(dma50),
+        dma200: Math.round(dma200),
+        high52: Math.round(high52),
+        target,
+        stop,
+        rrRatio: rrRatio.toFixed(1),
+        overallScore: finalScore,
+        signal
+      };
+    }
+
+    function initData() {
+      stocks = initialStocksData.map(calculateStockScores);
+      document.getElementById('scored-count').innerText = stocks.length;
+      document.getElementById('snapshot-date').innerText = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // Live Price Updates simulation every 4 seconds
+    setInterval(() => {
+      stocks = stocks.map(stock => {
+        const delta = (Math.random() - 0.49) * (stock.price * 0.008);
+        const newPrice = Math.max(10, Math.round((stock.price + delta) * 100) / 100);
+        return calculateStockScores({ ...stock, price: newPrice });
+      });
+      // Re-render current view smoothly
+      renderCurrentTab();
+    }, 4000);
+
+    // ==========================================
+    // 2. NAVIGATION & TAB SWITCHING
+    // ==========================================
+    let currentTab = 'dashboard';
+    let searchQuery = '';
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-blue-900', 'text-white');
+        btn.classList.add('text-gray-600');
+      });
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-blue-900', 'text-white');
+        activeBtn.classList.remove('text-gray-600');
+      }
+      renderCurrentTab();
+    }
+
+    function renderCurrentTab() {
+      const main = document.getElementById('main-content');
+      if (currentTab === 'dashboard') renderDashboard(main);
+      else if (currentTab === 'stocks') renderStocksTable(main);
+      else if (currentTab === 'buy') renderBuyCandidates(main);
+      else if (currentTab === 'portfolio') renderPortfolio(main);
+      else if (currentTab === 'sectors') renderSectorsView(main);
+    }
+
+    // ==========================================
+    // 3. TAB RENDERERS
+    // ==========================================
+
+    // --- DASHBOARD VIEW ---
+    function renderDashboard(container) {
+      const buyCount = stocks.filter(s => s.signal === 'BUY').length;
+      const holdCount = stocks.filter(s => s.signal === 'HOLD').length;
+      const avoidCount = stocks.filter(s => s.signal === 'AVOID').length;
+      const topBuys = stocks.filter(s => s.signal === 'BUY').sort((a,b) => b.overallScore - a.overallScore).slice(0, 5);
+
+      container.innerHTML = `
+        <!-- MARKET SUMMARY METRICS -->
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+            <span class="text-xs text-gray-500 font-bold uppercase tracking-wider block">Market Regime</span>
+            <span class="text-lg font-bold text-green-600 block mt-0.5">BULLISH</span>
+            <span class="text-xs text-gray-500">65% above 50-DMA</span>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+            <span class="text-xs text-gray-500 font-bold uppercase tracking-wider block">Nifty 50</span>
+            <span class="text-lg font-bold block mt-0.5">25,023.70</span>
+            <span class="text-xs font-semibold text-green-600">+1.99% (Day)</span>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+            <span class="text-xs text-gray-500 font-bold uppercase tracking-wider block">ADV / DEC</span>
+            <span class="text-lg font-bold block mt-0.5">1,842 / 1,208</span>
+            <span class="text-xs text-green-600 font-semibold">+534 Net Adv</span>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+            <span class="text-xs text-gray-500 font-bold uppercase tracking-wider block">FII Net Flow</span>
+            <span class="text-lg font-bold text-green-600 block mt-0.5">+₹45,960 Cr</span>
+            <span class="text-xs text-gray-500">Month to Date</span>
+          </div>
+        </div>
+
+        <!-- SIGNAL BREAKDOWN QUICK SCAN -->
+        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm mb-3">
+          <h2 class="font-bold text-sm text-gray-800 mb-2">Signal Distribution</h2>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="switchTab('buy')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded text-center transition">
+              <span class="text-lg font-bold block">${buyCount}</span>
+              <span class="text-xs uppercase font-semibold">BUY</span>
+            </button>
+            <button onclick="switchTab('stocks')" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded text-center transition">
+              <span class="text-lg font-bold block">${holdCount}</span>
+              <span class="text-xs uppercase font-semibold">WATCH</span>
+            </button>
+            <button onclick="switchTab('stocks')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded text-center transition">
+              <span class="text-lg font-bold block">${avoidCount}</span>
+              <span class="text-xs uppercase font-semibold">AVOID</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- CATEGORY A TOP BUY CANDIDATES -->
+        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm mb-3">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="font-bold text-sm text-gray-800">Top BUY Setups (Category A)</h2>
+            <button onclick="switchTab('buy')" class="text-xs text-blue-700 font-bold hover:underline">View All →</button>
+          </div>
+          <div class="space-y-2">
+            ${topBuys.map((s, idx) => `
+              <div class="border-l-4 border-green-500 bg-gray-50 p-2 rounded-r flex justify-between items-center">
+                <div>
+                  <div class="font-bold text-sm text-blue-900">${idx+1}. ${s.symbol} <span class="text-xs font-normal text-gray-500">(${s.sector})</span></div>
+                  <div class="text-xs text-gray-600">${s.company}</div>
+                  <div class="text-xs text-gray-500 mt-0.5">Price: <span class="input-blue">₹${s.price.toFixed(2)}</span> | Target: ₹${s.target}</div>
+                </div>
+                <div class="text-right">
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-bold badge-buy">${s.overallScore}/10</span>
+                  <div class="text-xs text-green-700 font-semibold mt-1">BUY</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- SECTOR SCORE CHART -->
+        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+          <h2 class="font-bold text-sm text-gray-800 mb-2">Sector Momentum</h2>
+          <div class="h-48">
+            <canvas id="sectorChart"></canvas>
+          </div>
+        </div>
+      `;
+
+      // Render Chart.js Sector Bar Chart
+      setTimeout(() => {
+        const ctx = document.getElementById('sectorChart');
+        if (ctx) {
+          const sectorScores = {};
+          stocks.forEach(s => {
+            if (!sectorScores[s.sector]) sectorScores[s.sector] = [];
+            sectorScores[s.sector].push(s.overallScore);
+          });
+          const labels = Object.keys(sectorScores);
+          const data = labels.map(sec => {
+            const arr = sectorScores[sec];
+            return Number((arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1));
+          });
+
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [{
+                label: 'Avg Score (/10)',
+                data,
+                backgroundColor: '#0B3D91',
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: { y: { min: 0, max: 10 } }
+            }
+          });
+        }
+      }, 50);
+    }
+
+    // --- STOCKS MASTER DATABASE VIEW ---
+    function renderStocksTable(container) {
+      const filtered = stocks.filter(s =>
+        s.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.sector.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      container.innerHTML = `
+        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm mb-3">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="font-bold text-base text-gray-900">Master Stock Database</h2>
+            <span class="text-xs text-gray-500 font-semibold">${filtered.length} items</span>
+          </div>
+          <input
+            type="text"
+            id="stock-search"
+            placeholder="Search symbol, company, or sector..."
+            value="${searchQuery}"
+            oninput="handleSearch(this.value)"
+            class="w-full p-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-900 focus:outline-none input-blue"
+          />
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="header-navy text-xs font-bold uppercase">
+                  <th class="p-2">Symbol</th>
+                  <th class="p-2">Company</th>
+                  <th class="p-2 text-right">CMP (₹)</th>
+                  <th class="p-2">Sector</th>
+                  <th class="p-2 text-center">Score</th>
+                  <th class="p-2 text-center">Signal</th>
+                  <th class="p-2 text-center">R:R</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-xs">
+                ${filtered.map(s => `
+                  <tr class="hover:bg-blue-50 transition">
+                    <td class="p-2 font-bold text-blue-900">${s.symbol}</td>
+                    <td class="p-2 text-gray-700">${s.company}</td>
+                    <td class="p-2 text-right font-bold input-blue">₹${s.price.toFixed(2)}</td>
+                    <td class="p-2 text-gray-600">${s.sector}</td>
+                    <td class="p-2 text-center font-bold text-blue-800">${s.overallScore}/10</td>
+                    <td class="p-2 text-center">
+                      <span class="px-2 py-0.5 rounded text-xs font-bold ${
+                        s.signal === 'BUY' ? 'badge-buy' : (s.signal === 'HOLD' ? 'badge-hold' : 'badge-avoid')
+                      }">${s.signal}</span>
+                    </td>
+                    <td class="p-2 text-center text-gray-600">${s.rrRatio}:1</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleSearch(val) {
+      searchQuery = val;
+      renderStocksTable(document.getElementById('main-content'));
+      // Keep focus on search input
+      const input = document.getElementById('stock-search');
+      if (input) {
+        input.focus();
+        input.setSelectionRange(val.length, val.length);
+      }
+    }
+
+    // --- BUY CANDIDATES VIEW ---
+    function renderBuyCandidates(container) {
+      const buys = stocks.filter(s => s.signal === 'BUY').sort((a,b) => b.overallScore - a.overallScore);
+      const holds = stocks.filter(s => s.signal === 'HOLD').sort((a,b) => b.overallScore - a.overallScore);
+
+      container.innerHTML = `
+        <div class="mb-3">
+          <h2 class="text-base font-bold text-gray-900 mb-1">Buy Candidates & Watchlists</h2>
+          <p class="text-xs text-gray-500">Category A passes all gates. Category B requires technical/breakout confirmation.</p>
+        </div>
+
+        <!-- CATEGORY A -->
+        <div class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm mb-4">
+          <h3 class="font-bold text-sm text-green-700 mb-2 border-b pb-1">Category A — Strong BUY Conviction (${buys.length})</h3>
+          <div class="space-y-3">
+            ${buys.map((s, idx) => `
+              <div class="border border-green-200 rounded p-3 bg-green-50/30">
+                <div class="flex justify-between items-start mb-1">
+                  <div>
+                    <span class="font-bold text-sm text-blue-900">${idx+1}. ${s.symbol}</span>
+                    <span class="text-xs text-gray-500 ml-1">(${s.sector})</span>
+                    <div class="text-xs text-gray-600">${s.company}</div>
+                  </div>
+                  <span class="px-2 py-1 rounded text-xs font-bold badge-buy">${s.overallScore}/10</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs mt-2 bg-white p-2 rounded border border-gray-100">
+                  <div><span class="text-gray-500">CMP:</span> <span class="font-bold input-blue">₹${s.price.toFixed(2)}</span></div>
+                  <div><span class="text-gray-500">Target 1:</span> <span class="font-bold text-green-700">₹${s.target}</span></div>
+                  <div><span class="text-gray-500">Stop Loss:</span> <span class="font-bold text-red-600">₹${s.stop}</span></div>
+                  <div><span class="text-gray-500">Risk-Reward:</span> <span class="font-bold text-blue-900">${s.rrRatio}:1</span></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- CATEGORY B -->
+        <div class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+          <h3 class="font-bold text-sm text-blue-700 mb-2 border-b pb-1">Category B — Future Watchlist (${holds.length})</h3>
+          <div class="space-y-2">
+            ${holds.slice(0, 8).map((s, idx) => `
+              <div class="flex justify-between items-center p-2 border-b border-gray-100">
+                <div>
+                  <span class="font-bold text-sm text-gray-800">${idx+1}. ${s.symbol}</span>
+                  <span class="text-xs text-gray-500">₹${s.price.toFixed(2)}</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-xs font-bold badge-hold">Score ${s.overallScore}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- PORTFOLIO VIEW ---
+    function renderPortfolio(container) {
+      const holdings = [
+        { symbol: 'RELIANCE', qty: 100, avgCost: 2520, current: stocks.find(s=>s.symbol==='RELIANCE')?.price || 2850 },
+        { symbol: 'TCS', qty: 50, avgCost: 3400, current: stocks.find(s=>s.symbol==='TCS')?.price || 3580 },
+        { symbol: 'HDFCBANK', qty: 200, avgCost: 1680, current: stocks.find(s=>s.symbol==='HDFCBANK')?.price || 1720 },
+        { symbol: 'INFY', qty: 75, avgCost: 1420, current: stocks.find(s=>s.symbol==='INFY')?.price || 1520 },
+        { symbol: 'HINDUNILVR', qty: 30, avgCost: 2650, current: stocks.find(s=>s.symbol==='HINDUNILVR')?.price || 2780 }
+      ];
+
+      const invested = holdings.reduce((sum, h) => sum + (h.qty * h.avgCost), 0);
+      const currentVal = holdings.reduce((sum, h) => sum + (h.qty * h.current), 0);
+      const pnl = currentVal - invested;
+      const pnlPct = ((pnl / invested) * 100).toFixed(2);
+
+      container.innerHTML = `
+        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm mb-3">
+          <h2 class="font-bold text-base text-gray-900 mb-2">My Holdings Summary</h2>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <span class="text-xs text-gray-500 uppercase font-semibold">Invested</span>
+              <span class="text-lg font-bold block">₹${invested.toLocaleString('en-IN')}</span>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500 uppercase font-semibold">Current Value</span>
+              <span class="text-lg font-bold block">₹${currentVal.toLocaleString('en-IN')}</span>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500 uppercase font-semibold">Unrealised P&L</span>
+              <span class="text-lg font-bold ${pnl>=0?'text-green-600':'text-red-600'} block">
+                ${pnl>=0?'+':''}₹${Math.round(pnl).toLocaleString('en-IN')}
+              </span>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500 uppercase font-semibold">Total Return</span>
+              <span class="text-lg font-bold ${pnl>=0?'text-green-600':'text-red-600'} block">
+                ${pnlPct}%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="header-navy font-bold uppercase">
+                  <th class="p-2">Symbol</th>
+                  <th class="p-2 text-right">Qty</th>
+                  <th class="p-2 text-right">Avg Cost</th>
+                  <th class="p-2 text-right">CMP</th>
+                  <th class="p-2 text-right">P&L (₹)</th>
+                  <th class="p-2 text-right">Return</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                ${holdings.map(h => {
+                  const itemPnl = (h.current - h.avgCost) * h.qty;
+                  const itemRet = (((h.current - h.avgCost) / h.avgCost) * 100).toFixed(1);
+                  return `
+                    <tr class="hover:bg-blue-50">
+                      <td class="p-2 font-bold text-blue-900">${h.symbol}</td>
+                      <td class="p-2 text-right">${h.qty}</td>
+                      <td class="p-2 text-right">₹${h.avgCost}</td>
+                      <td class="p-2 text-right font-semibold input-blue">₹${h.current.toFixed(2)}</td>
+                      <td class="p-2 text-right font-bold ${itemPnl>=0?'text-green-600':'text-red-600'}">
+                        ${itemPnl>=0?'+':''}₹${Math.round(itemPnl)}
+                      </td>
+                      <td class="p-2 text-right font-bold ${itemRet>=0?'text-green-600':'text-red-600'}">
+                        ${itemRet}%
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- SECTORS VIEW ---
+    function renderSectorsView(container) {
+      const sectorStats = SECTORS.map(sec => {
+        const secStocks = stocks.filter(s => s.sector === sec);
+        const avgScore = secStocks.length ? (secStocks.reduce((a,b)=>a+b.overallScore,0)/secStocks.length).toFixed(1) : 0;
+        const above50 = secStocks.length ? Math.round((secStocks.filter(s => s.price > s.dma50).length / secStocks.length) * 100) : 0;
+        return { sector: sec, count: secStocks.length, avgScore, above50 };
+      }).sort((a,b) => b.avgScore - a.avgScore);
+
+      container.innerHTML = `
+        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm mb-3">
+          <h2 class="font-bold text-base text-gray-900 mb-1">Sector Heatmap & Breadth</h2>
+          <p class="text-xs text-gray-500">Calculated live from Master Database. Sectors with higher % above 50-DMA attract momentum.</p>
+        </div>
+
+        <div class="space-y-2">
+          ${sectorStats.map(s => `
+            <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm flex justify-between items-center">
+              <div>
+                <span class="font-bold text-sm text-blue-900">${s.sector}</span>
+                <span class="text-xs text-gray-500 block">${s.count} Stocks tracked</span>
+              </div>
+              <div class="text-right">
+                <span class="inline-block px-2 py-0.5 rounded text-xs font-bold badge-hold mb-1">Score: ${s.avgScore}/10</span>
+                <div class="text-xs text-gray-600 font-semibold">${s.above50}% > 50-DMA</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // Initialize application on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initData();
+      renderCurrentTab();
+    });
+  </script>
+</body>
+</html>
