@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indian Equity Intelligence Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for reliable charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- PapaParse for CSV parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    * {
+      font-family: 'Calibri', 'Segoe UI', Arial, sans-serif !important;
+    }
+    .header-navy {
+      background-color: #0B3D91 !important;
+      color: #ffffff !important;
+    }
+    .input-blue {
+      color: #0000FF !important;
+      font-weight: 600;
+    }
+    .badge-buy {
+      background-color: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+    .badge-hold {
+      background-color: #DBEAFE;
+      color: #1E40AF;
+      border: 1px solid #BFDBFE;
+    }
+    .badge-avoid {
+      background-color: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FECACA;
+    }
+    /* Sticky bottom nav */
+    .bottom-nav-btn.active {
+      background-color: #0B3D91;
+      color: #ffffff;
+    }
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #0B3D91;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen pb-20 text-gray-800">
+
+  <!-- APP CONTAINER -->
+  <div id="app">
+    <!-- HEADER -->
+    <header class="header-navy p-4 text-center shadow-md">
+      <h1 className="text-xl font-bold tracking-wide">Indian Equity Intelligence Dashboard</h1>
+      <p class="text-xs opacity-90 mt-1">
+        Live Refresh: <span id="snapshot-date">Connecting...</span> | Stocks: <span id="scored-count">0</span>
+      </p>
+      <p class="text-xs text-blue-200 mt-0.5">Source: Google Sheets Live Feed</p>
+    </header>
+
+    <!-- MAIN VIEW AREA -->
+    <main id="main-content" class="max-w-4xl mx-auto p-3">
+      <div class="flex flex-col items-center justify-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+        <p class="mt-4 text-gray-500 font-semibold">Fetching live market data...</p>
+      </div>
+    </main>
+
+    <!-- FIXED BOTTOM NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-50 shadow-lg">
+      <div class="max-w-4xl mx-auto grid grid-cols-5 p-1 gap-1">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all active">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 00-1 1m-6 0h6"></path></svg>
+          <span class="text-xs font-semibold block">Dashboard</span>
+        </button>
+        <button onclick="switchTab('stocks')" id="nav-stocks" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all text-gray-600 hover:bg-gray-100">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+          <span class="text-xs font-semibold block">Stocks</span>
+        </button>
+        <button onclick="switchTab('buy')" id="nav-buy" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all text-gray-600 hover:bg-gray-100">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span class="text-xs font-semibold block">Buy Lists</span>
+        </button>
+        <button onclick="switchTab('portfolio')" id="nav-portfolio" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all text-gray-600 hover:bg-gray-100">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span class="text-xs font-semibold block">Portfolio</span>
+        </button>
+        <button onclick="switchTab('sectors')" id="nav-sectors" class="bottom-nav-btn py-2 px-1 rounded text-center transition-all text-gray-600 hover:bg-gray-100">
+          <svg class="w-5 h-5 mx-auto mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12H4z"></path></svg>
+          <span class="text-xs font-semibold block">Sectors</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+ <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
+  // PASTE YOUR CSV LINK FROM GOOGLE SHEETS HERE:
+  const LIVE_DATA_URL = "PASTE_YOUR_CSV_LINK_HERE";
+  
+  const WEIGHTS = { fundamentals: 20, technical: 20, priceAction: 15, sectorStrength: 15, news: 10, valuation: 10, market: 10 };
+  let stocks = [];
+
+  // ============================================================
+  // FETCH & PARSE LIVE DATA
+  // ============================================================
+  async function fetchLiveData() {
+    Papa.parse(LIVE_DATA_URL, {
+      download: true,
+      header: true,
+      dynamicTyping: true,
+      complete: function(results) {
+        // Map Google Sheet columns to the Scoring Engine
+        stocks = results.data.filter(row => row.Symbol).map(row => {
+          return calculateStockScores({
+            symbol: row.Symbol,
+            company: row.Company,
+            sector: row.Sector,
+            price: row.Price,
+            roe: row.ROE || 0,
+            debtEquity: row.DebtEquity || 0,
+            revCAGR: row.RevCAGR || 0,
+            fScore: row.FScore || 5,
+            carRating: row.CarRating || 'Avoid/Hold'
+          });
+        });
+        document.getElementById('scored-count').innerText = stocks.length;
+        document.getElementById('snapshot-date').innerText = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        renderCurrentTab();
+      }
+    });
+  }
+
+  // ============================================================
+  // SCORING ENGINE (Kept original logic)
+  // ============================================================
+  function calculateStockScores(stock) {
+    const price = stock.price || 0;
+    // (Rest of your original scoring engine logic here...)
+    // ... Copy the original 'calculateStockScores' function content here ...
+    // ...
+  }
+
+  // ============================================================
+  // NAVIGATION & TAB SWITCHING (Same as before)
+  // ============================================================
+  // ... Keep all your existing switchTab, renderDashboard, renderStocksTable etc. ...
+
+  // Initialize application on load
+  window.addEventListener('DOMContentLoaded', () => {
+    fetchLiveData();
+    setInterval(fetchLiveData, 60000); // Auto-refresh live data every 60 seconds
+  });
+</script>
+</body>
+</html>
